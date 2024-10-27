@@ -153,7 +153,8 @@ class DawarichAPI:
                     error=response.reason or "",
                 )
             data = await response.json()
+            # TODO v2: when Home assistant supports v2, use model_validate instead of parse_obj
             return StatsResponse(
                 response_code=response.status,
-                response=StatsResponseModel.model_validate(data),
+                response=StatsResponseModel.parse_obj(data),
             )
