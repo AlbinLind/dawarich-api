@@ -1,30 +1,80 @@
 """API class for Dawarich."""
 
 import datetime
+from enum import Enum
+from typing import Generic, TypeVar
 import aiohttp
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+T = TypeVar("T")
 
 
-class DawarichResponse(BaseModel):
+class DawarichResponse(BaseModel, Generic[T]):
     """Dawarich API response."""
 
-    success: bool
-    message: str
-    context: str = ""
+    response_code: int
+    response: T | None = None
+    error: str = ""
+
+    @property
+    def success(self) -> bool:
+        """Return True if the response code is 200."""
+        return str(self.response_code).startswith("2")
+
+
+class StatsResponseYearStats(BaseModel):
+    """Dawarich API response on /api/v1/stats/yearly."""
+
+    year: int
+    total_distance_km: float = Field(..., alias="totalDistanceKm")
+    total_countries_visited: int = Field(..., alias="totalCountriesVisited")
+    total_cities_visited: int = Field(..., alias="totalCitiesVisited")
+    monthly_distance_km: dict[str, float] = Field(..., alias="monthlyDistanceKm")
+
+
+class StatsResponseModel(BaseModel):
+    """Dawarich API response on /api/v1/stats."""
+
+    total_distance_km: float = Field(..., alias="totalDistanceKm")
+    total_points_tracked: int = Field(..., alias="totalPointsTracked")
+    total_reverse_geocoded_points: int = Field(..., alias="totalReverseGeocodedPoints")
+    total_countries_visited: int = Field(..., alias="totalCountriesVisited")
+    total_cities_visited: int = Field(..., alias="totalCitiesVisited")
+    yearly_stats: list[StatsResponseYearStats] = Field(..., alias="yearlyStats")
+
+
+class StatsResponse(DawarichResponse[StatsResponseModel]):
+    """Dawarich API response on /api/v1/stats."""
+
+    pass
+
+
+class AddOnePointResponse(DawarichResponse[None]):
+    """Dawarich API response on /api/v1/overland/batches."""
+
+    pass
+
+
+class APIVersion(Enum):
+    """Supported API versions."""
+
+    V1 = "v1"
 
 
 class DawarichAPI:
-    def __init__(self, url: str, api_key: str, name: str, *, api_version: str = "v1"):
+    def __init__(
+        self, url: str, api_key: str, *, api_version: APIVersion = APIVersion.V1
+    ):
         """Initialize the API."""
-        self.url = url
+        self.url = url.removesuffix("/")
         self.api_version = api_version
         self.api_key = api_key
-        self.name = name
 
     async def add_one_point(
         self,
         longitude: float,
         latitude: float,
+        name: str,
         *,
         time_stamp: datetime.date = datetime.date.today(),
         altitude: int = 0,
@@ -40,8 +90,10 @@ class DawarichAPI:
         wifi: str = "unknown",
         battery_state: str = "unknown",
         battery_level: int = 0,
-    ) -> DawarichResponse:
+    ) -> AddOnePointResponse:
         """Post data to the API."""
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
         locations_in_payload = 1
         json_data = {
             "locations": [
@@ -67,7 +119,7 @@ class DawarichAPI:
                         "deffered": deferred,
                         "significant_change": significant_change,
                         "locations_in_payload": locations_in_payload,
-                        "device_id": self.name,
+                        "device_id": name,
                         "wifi": wifi,
                         "battery_state": battery_state,
                         "battery_level": battery_level,
@@ -80,10 +132,28 @@ class DawarichAPI:
                 self.url + f"/api/v1/overland/batches?api_key={self.api_key}",
                 json=json_data,
             )
-            if response.status == 201:
-                return DawarichResponse(success=True, message="Data sent successfully")
-            if response.status == 401:
-                return DawarichResponse(success=False, message="Unauthorized")
-            return DawarichResponse(
-                success=False, message="Failed to send data", context=str(response.text)
+            return AddOnePointResponse(
+                response_code=response.status,
+                response=None,
+                error=response.reason or "",
+            )
+
+    async def get_stats(self) -> StatsResponse:
+        """Get the stats from the API."""
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+        async with aiohttp.ClientSession() as session:
+            response = await session.get(
+                self.url + f"/api/v1/stats?api_key={self.api_key}"
+            )
+            if response.status != 200:
+                return StatsResponse(
+                    response_code=response.status,
+                    response=None,
+                    error=response.reason or "",
+                )
+            data = await response.json()
+            return StatsResponse(
+                response_code=response.status,
+                response=StatsResponseModel.model_validate(data),
             )
