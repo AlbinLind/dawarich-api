@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "dawarich-api"
+version = "0.1.0"
+description = "A python wrapper for the Dawarich"
+authors = ["AlbinLind <albin.lindqvist@hotmail.se>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^2.9.2"
+aiohttp = "^3.10.10"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
