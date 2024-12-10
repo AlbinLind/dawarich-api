@@ -76,7 +76,7 @@ class DawarichAPI:
         latitude: float,
         name: str,
         *,
-        time_stamp: datetime.date = datetime.date.today(),
+        time_stamp: datetime.datetime | None = None,
         altitude: int = 0,
         speed: int = 0,
         horizontal_accuracy: int = 0,
@@ -91,9 +91,14 @@ class DawarichAPI:
         battery_state: str = "unknown",
         battery_level: int = 0,
     ) -> AddOnePointResponse:
-        """Post data to the API."""
+        """Post data to the API.
+       
+        The default value for time_stamp is the current time of the system. 
+        """
         if self.api_version != APIVersion.V1:
             raise ValueError("Unsupported API version for this method.")
+        if time_stamp is None:
+            time_stamp = datetime.datetime.now()
         locations_in_payload = 1
         json_data = {
             "locations": [
