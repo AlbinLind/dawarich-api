@@ -63,7 +63,12 @@ class APIVersion(Enum):
 
 class DawarichAPI:
     def __init__(
-        self, url: str, api_key: str, *, api_version: APIVersion = APIVersion.V1, timezone: datetime.tzinfo | None = None
+        self,
+        url: str,
+        api_key: str,
+        *,
+        api_version: APIVersion = APIVersion.V1,
+        timezone: datetime.tzinfo | None = None,
     ):
         """Initialize the API."""
         self.url = url.removesuffix("/")
@@ -93,16 +98,21 @@ class DawarichAPI:
         battery_level: int = 0,
     ) -> AddOnePointResponse:
         """Post data to the API.
-       
-        The default value for time_stamp is the current time of the system. 
+
+        The default value for time_stamp is the current time of the system.
         """
         if self.api_version != APIVersion.V1:
             raise ValueError("Unsupported API version for this method.")
+
+        # Convert time_stamp to datetime object
         if isinstance(time_stamp, str):
             time_stamp = datetime.datetime.fromisoformat(time_stamp)
         if time_stamp is None:
             time_stamp = datetime.datetime.now()
+
+        # Convert time_stamp to the timezone of the API
         time_stamp = time_stamp.astimezone(tz=self.timezone)
+
         locations_in_payload = 1
         json_data = {
             "locations": [
