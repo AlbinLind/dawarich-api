@@ -63,12 +63,13 @@ class APIVersion(Enum):
 
 class DawarichAPI:
     def __init__(
-        self, url: str, api_key: str, *, api_version: APIVersion = APIVersion.V1
+        self, url: str, api_key: str, *, api_version: APIVersion = APIVersion.V1, timezone: datetime.tzinfo | None = None
     ):
         """Initialize the API."""
         self.url = url.removesuffix("/")
         self.api_version = api_version
         self.api_key = api_key
+        self.timezone = timezone or datetime.datetime.now().astimezone().tzinfo
 
     async def add_one_point(
         self,
@@ -98,7 +99,7 @@ class DawarichAPI:
         if self.api_version != APIVersion.V1:
             raise ValueError("Unsupported API version for this method.")
         if time_stamp is None:
-            time_stamp = datetime.datetime.now().astimezone()
+            time_stamp = datetime.datetime.now().astimezone(tz=self.timezone)
         locations_in_payload = 1
         json_data = {
             "locations": [
