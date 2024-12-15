@@ -98,8 +98,11 @@ class DawarichAPI:
         """
         if self.api_version != APIVersion.V1:
             raise ValueError("Unsupported API version for this method.")
+        if isinstance(time_stamp, str):
+            time_stamp = datetime.datetime.fromisoformat(time_stamp)
         if time_stamp is None:
-            time_stamp = datetime.datetime.now().astimezone(tz=self.timezone)
+            time_stamp = datetime.datetime.now()
+        time_stamp = time_stamp.astimezone(tz=self.timezone)
         locations_in_payload = 1
         json_data = {
             "locations": [
