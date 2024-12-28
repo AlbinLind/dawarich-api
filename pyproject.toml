@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dawarich-api"
-version = "0.1.4"
+version = "0.2.0"
 description = "A python wrapper for the Dawarich API"
 authors = ["Albin Lindqvist <albin.lindqvist@hotmail.se>"]
 license = "APGL-3.0"
