@@ -28,6 +28,7 @@ jobs:
 
       - name: Build release distributions
         run: |
+          pip install poetry
           poetry install
           poetry build
 
