@@ -5,9 +5,9 @@ description = "A python wrapper for the Dawarich API"
 authors = ["Albin Lindqvist <albin.lindqvist@hotmail.se>"]
 license = "APGL-3.0"
 readme = "README.md"
+homepage = "https://github.com/AlbinLind/dawarich-api"
+repository = "https://github.com/AlbinLind/dawarich-api"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Operating System :: OS Independent",
 ]
 
