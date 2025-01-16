@@ -12,6 +12,7 @@ T = TypeVar("T")
 # Constants
 API_V1_STATS_PATH = "/api/v1/stats"
 API_V1_BATCHES_PATH = "/api/v1/overland/batches"
+API_V1_AREAS = "/api/v1/areas"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -52,6 +53,16 @@ class StatsResponseModel(BaseModel):
     yearly_stats: list[StatsResponseYearStats] = Field(..., alias="yearlyStats")
 
 
+class AreaResponseModel(BaseModel):
+    """Dawarich API response on /api/v1/areas."""
+
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+    radius: int
+
+
 class StatsResponse(DawarichResponse[StatsResponseModel]):
     """Dawarich API response on /api/v1/stats."""
 
@@ -60,6 +71,18 @@ class StatsResponse(DawarichResponse[StatsResponseModel]):
 
 class AddOnePointResponse(DawarichResponse[None]):
     """Dawarich API response on /api/v1/overland/batches."""
+
+    pass
+
+
+class AreasResponse(DawarichResponse[list[AreaResponseModel]]):
+    """Dawarich API response on /api/v1/areas."""
+
+    pass
+
+
+class AreaActionResponse(DawarichResponse[None]):
+    """Dawarich API response on /api/v1/areas."""
 
     pass
 
@@ -211,6 +234,94 @@ class DawarichAPI:
         except aiohttp.ClientError as e:
             logger.error("Failed to get stats: %s", e)
             return StatsResponse(
+                response_code=500,
+                response=None,
+                error=str(e),
+            )
+
+    async def get_areas(self) -> AreasResponse:
+        """Get the areas from the API."""
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.get(
+                    self._build_url(API_V1_AREAS),
+                    headers=self._get_headers(),
+                )
+                response.raise_for_status()
+                data = await response.json()
+                return AreasResponse(
+                    response_code=response.status,
+                    response=[AreaResponseModel.parse_obj(d) for d in data],
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to get areas: %s", e)
+            return AreasResponse(
+                response_code=500,
+                response=None,
+                error=str(e),
+            )
+
+    async def create_an_area(
+        self, name: str, latitude: float, longitude: float, radius: int
+    ) -> AreaActionResponse:
+        """Create an area in the API."""
+
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+
+        data = {
+            "name": name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "radius": radius,
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.post(
+                    self._build_url(API_V1_AREAS),
+                    json=data,
+                    headers=self._get_headers(),
+                )
+                response.raise_for_status()
+                return AreaActionResponse(
+                    response_code=response.status,
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to create an area: %s", e)
+            return AreaActionResponse(
+                response_code=500,
+                response=None,
+                error=str(e),
+            )
+
+    async def delete_an_area(self, area_id: int) -> AreaActionResponse:
+        """Delete an area in the API."""
+
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+        if isinstance(area_id, str):
+            area_id = int(area_id)
+
+        if not isinstance(area_id, int):
+            raise ValueError("Area ID must be an integer.")
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.delete(
+                    self._build_url(f"{API_V1_AREAS}/{area_id}"),
+                    headers=self._get_headers(),
+                )
+                response.raise_for_status()
+                return AreaActionResponse(
+                    response_code=response.status,
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to delete an area: %s", e)
+            return AreaActionResponse(
                 response_code=500,
                 response=None,
                 error=str(e),
