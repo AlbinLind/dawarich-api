@@ -17,6 +17,7 @@ API_V1_BATCHES_PATH = "/api/v1/overland/batches"
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class DawarichResponse(BaseModel, Generic[T]):
     """Dawarich API response."""
 
@@ -86,7 +87,17 @@ class DawarichAPI:
 
     def _build_url(self, path: str) -> str:
         """Build API URL with authentication."""
-        return f"{self.url}{path}?api_key={self.api_key}"
+        return f"{self.url}{path}"
+
+    def _get_headers(self, with_auth: bool = True) -> dict[str, str]:
+        """Get headers for the API request."""
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if with_auth:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
 
     async def add_one_point(
         self,
@@ -163,6 +174,7 @@ class DawarichAPI:
                 response = await session.post(
                     self._build_url(API_V1_BATCHES_PATH),
                     json=json_data,
+                    headers=self._get_headers(),
                 )
                 response.raise_for_status()
                 return AddOnePointResponse(
@@ -187,6 +199,7 @@ class DawarichAPI:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
                     self._build_url(API_V1_STATS_PATH),
+                    headers=self._get_headers(),
                 )
                 response.raise_for_status()
                 data = await response.json()
