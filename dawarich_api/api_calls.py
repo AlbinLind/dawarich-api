@@ -366,13 +366,17 @@ class DawarichAPI:
 
         try:
             async with aiohttp.ClientSession() as session:
+                # HACK: The API key has to be passed as a parameter, otherwise 400 code is returned
+                # this is a bug in Dawarich and reported here: https://github.com/Freika/dawarich/issues/679
+                # for now continue to pass the API key as a parameter
                 response = await session.get(
                     self._build_url(API_V1_VISITED_CITIES),
                     params={
                         "start_at": start_at.isoformat(),
                         "end_at": end_at.isoformat(),
+                        "api_key": self.api_key,
                     },
-                    headers=self._get_headers(),
+                    # headers=self._get_headers(),
                 )
                 response.raise_for_status()
                 data = await response.json()
