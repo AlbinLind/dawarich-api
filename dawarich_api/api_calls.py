@@ -1,6 +1,7 @@
 """API class for Dawarich."""
 
 import datetime
+import logging
 from enum import Enum
 from typing import Generic, TypeVar
 import aiohttp
@@ -8,6 +9,13 @@ from pydantic import BaseModel, Field
 
 T = TypeVar("T")
 
+# Constants
+API_V1_STATS_PATH = "/api/v1/stats"
+API_V1_BATCHES_PATH = "/api/v1/overland/batches"
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class DawarichResponse(BaseModel, Generic[T]):
     """Dawarich API response."""
@@ -76,6 +84,10 @@ class DawarichAPI:
         self.api_key = api_key
         self.timezone = timezone or datetime.datetime.now().astimezone().tzinfo
 
+    def _build_url(self, path: str) -> str:
+        """Build API URL with authentication."""
+        return f"{self.url}{path}?api_key={self.api_key}"
+
     async def add_one_point(
         self,
         longitude: float,
@@ -92,7 +104,7 @@ class DawarichAPI:
         activity: str = "unknown",
         desired_accuracy: int = 0,
         deferred: int = 0,
-        significant_change: str = "unknonw",
+        significant_change: str = "unknown",
         wifi: str = "unknown",
         battery_state: str = "unknown",
         battery_level: int = 0,
@@ -135,7 +147,7 @@ class DawarichAPI:
                         "pauses": pauses,
                         "activity": activity,
                         "desired_accuracy": desired_accuracy,
-                        "deffered": deferred,
+                        "deferred": deferred,
                         "significant_change": significant_change,
                         "locations_in_payload": locations_in_payload,
                         "device_id": name,
@@ -146,34 +158,47 @@ class DawarichAPI:
                 }
             ]
         }
-        async with aiohttp.ClientSession() as session:
-            response = await session.post(
-                self.url + f"/api/v1/overland/batches?api_key={self.api_key}",
-                json=json_data,
-            )
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.post(
+                    self._build_url(API_V1_BATCHES_PATH),
+                    json=json_data,
+                )
+                response.raise_for_status()
+                return AddOnePointResponse(
+                    response_code=response.status,
+                    response=None,
+                    error=response.reason or "",
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to add point: %s", e)
             return AddOnePointResponse(
-                response_code=response.status,
+                response_code=500,
                 response=None,
-                error=response.reason or "",
+                error=str(e),
             )
 
     async def get_stats(self) -> StatsResponse:
         """Get the stats from the API."""
         if self.api_version != APIVersion.V1:
             raise ValueError("Unsupported API version for this method.")
-        async with aiohttp.ClientSession() as session:
-            response = await session.get(
-                self.url + f"/api/v1/stats?api_key={self.api_key}"
-            )
-            if response.status != 200:
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.get(
+                    self._build_url(API_V1_STATS_PATH),
+                )
+                response.raise_for_status()
+                data = await response.json()
+                # TODO v2: when Home assistant supports v2, use model_validate instead of parse_obj
                 return StatsResponse(
                     response_code=response.status,
-                    response=None,
-                    error=response.reason or "",
+                    response=StatsResponseModel.parse_obj(data),
                 )
-            data = await response.json()
-            # TODO v2: when Home assistant supports v2, use model_validate instead of parse_obj
+        except aiohttp.ClientError as e:
+            logger.error("Failed to get stats: %s", e)
             return StatsResponse(
-                response_code=response.status,
-                response=StatsResponseModel.parse_obj(data),
+                response_code=500,
+                response=None,
+                error=str(e),
             )
