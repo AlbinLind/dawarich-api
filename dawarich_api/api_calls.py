@@ -1,6 +1,7 @@
 """API class for Dawarich."""
 
 import datetime
+import json
 import logging
 from enum import Enum
 from typing import Generic, TypeVar
@@ -13,6 +14,7 @@ T = TypeVar("T")
 API_V1_STATS_PATH = "/api/v1/stats"
 API_V1_BATCHES_PATH = "/api/v1/overland/batches"
 API_V1_AREAS = "/api/v1/areas"
+API_V1_VISITED_CITIES = "/api/v1/countries/visited_cities"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -63,6 +65,28 @@ class AreaResponseModel(BaseModel):
     radius: int
 
 
+class CitiesPerCountryModel(BaseModel):
+    """Dawarich API response on /api/v1/countries/visited_cities."""
+
+    city: str
+    points: int
+    timestamp: int
+    stayed_for: int
+
+
+class CountryModel(BaseModel):
+    """Dawarich API response on /api/v1/countries/visited_cities."""
+
+    country: str
+    cities: list[CitiesPerCountryModel]
+
+
+class VisitedCitiesResponseModel(BaseModel):
+    """Dawarich API response on /api/v1/countries/visited_cities."""
+
+    data: list[CountryModel]
+
+
 class StatsResponse(DawarichResponse[StatsResponseModel]):
     """Dawarich API response on /api/v1/stats."""
 
@@ -83,6 +107,12 @@ class AreasResponse(DawarichResponse[list[AreaResponseModel]]):
 
 class AreaActionResponse(DawarichResponse[None]):
     """Dawarich API response on /api/v1/areas."""
+
+    pass
+
+
+class VisitedCitiesResponse(DawarichResponse[VisitedCitiesResponseModel]):
+    """Dawarich API response on /api/v1/countries/visited_cities."""
 
     pass
 
@@ -322,6 +352,37 @@ class DawarichAPI:
         except aiohttp.ClientError as e:
             logger.error("Failed to delete an area: %s", e)
             return AreaActionResponse(
+                response_code=500,
+                response=None,
+                error=str(e),
+            )
+
+    async def get_visited_cities(
+        self, start_at: datetime.date, end_at: datetime.date
+    ) -> VisitedCitiesResponse:
+        """Get all visited cities in a given time range."""
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.get(
+                    self._build_url(API_V1_VISITED_CITIES),
+                    params={
+                        "start_at": start_at.isoformat(),
+                        "end_at": end_at.isoformat(),
+                    },
+                    headers=self._get_headers(),
+                )
+                response.raise_for_status()
+                data = await response.json()
+                return VisitedCitiesResponse(
+                    response_code=response.status,
+                    response=VisitedCitiesResponseModel.parse_obj(data),
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to get visited cities: %s", e)
+            return VisitedCitiesResponse(
                 response_code=500,
                 response=None,
                 error=str(e),
