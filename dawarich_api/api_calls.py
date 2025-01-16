@@ -17,6 +17,7 @@ API_V1_BATCHES_PATH = "/api/v1/overland/batches"
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class DawarichResponse(BaseModel, Generic[T]):
     """Dawarich API response."""
 
