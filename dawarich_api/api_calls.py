@@ -173,6 +173,7 @@ class DawarichAPI:
                 response = await session.post(
                     self._build_url(API_V1_BATCHES_PATH),
                     json=json_data,
+                    headers=self._get_headers(),
                 )
                 response.raise_for_status()
                 return AddOnePointResponse(
@@ -197,6 +198,7 @@ class DawarichAPI:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
                     self._build_url(API_V1_STATS_PATH),
+                    headers=self._get_headers(),
                 )
                 response.raise_for_status()
                 data = await response.json()
