@@ -86,7 +86,17 @@ class DawarichAPI:
 
     def _build_url(self, path: str) -> str:
         """Build API URL with authentication."""
-        return f"{self.url}{path}?api_key={self.api_key}"
+        return f"{self.url}{path}"
+
+    def _get_headers(self, with_auth: bool = True) -> dict[str, str]:
+        """Get headers for the API request."""
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if with_auth:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
 
     async def add_one_point(
         self,
