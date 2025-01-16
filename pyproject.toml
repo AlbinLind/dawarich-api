@@ -2,7 +2,7 @@
 name = "dawarich-api"
 version = "0.3.0"
 description = "A python wrapper for the Dawarich API"
-dependencies = ["pydantic>1.8", "aiohttp>3.10"]
+dependencies = ["pydantic>=1.8", "aiohttp>=3.10"]
 requires-python = ">=3.10"
 authors = [{ name = "Albin Lindqvist", email = "albin.lindqvist@hotmail.se" }]
 license = { file = "LICENSE" }
@@ -10,8 +10,8 @@ readme = "README.md"
 classifiers = ["Operating System :: OS Independent"]
 
 [project.optional-dependencies]
-test = ["pytest>8.3.4", "pytest-asyncio>0.25.0"]
-format = ["ruff>0.7.1"]
+test = ["pytest>=8.3.4", "pytest-asyncio>=0.25.0"]
+format = ["ruff>=0.7.1"]
 
 
 [project.urls]
