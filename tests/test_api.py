@@ -46,3 +46,19 @@ async def test_stats(api_client: DawarichAPI):
     response: StatsResponse = await api_client.get_stats()
     assert response.response_code == 200
     assert isinstance(response.response, StatsResponseModel)
+
+
+@pytest.mark.asyncio
+async def test_get_areas(api_client: DawarichAPI):
+    """Test get_areas method."""
+    response = await api_client.get_areas()
+    assert response.response_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_visited_cities(api_client: DawarichAPI):
+    """Test get_visited_cities method."""
+    response = await api_client.get_visited_cities(
+        start_at=datetime.date(2024, 1, 1), end_at=datetime.date(2025, 2, 1)
+    )
+    assert response.response_code == 200

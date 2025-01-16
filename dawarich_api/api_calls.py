@@ -12,6 +12,8 @@ T = TypeVar("T")
 # Constants
 API_V1_STATS_PATH = "/api/v1/stats"
 API_V1_BATCHES_PATH = "/api/v1/overland/batches"
+API_V1_AREAS = "/api/v1/areas"
+API_V1_VISITED_CITIES = "/api/v1/countries/visited_cities"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -52,6 +54,38 @@ class StatsResponseModel(BaseModel):
     yearly_stats: list[StatsResponseYearStats] = Field(..., alias="yearlyStats")
 
 
+class AreaResponseModel(BaseModel):
+    """Dawarich API response on /api/v1/areas."""
+
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+    radius: int
+
+
+class CitiesPerCountryModel(BaseModel):
+    """Dawarich API response on /api/v1/countries/visited_cities."""
+
+    city: str
+    points: int
+    timestamp: int
+    stayed_for: int
+
+
+class CountryModel(BaseModel):
+    """Dawarich API response on /api/v1/countries/visited_cities."""
+
+    country: str
+    cities: list[CitiesPerCountryModel]
+
+
+class VisitedCitiesResponseModel(BaseModel):
+    """Dawarich API response on /api/v1/countries/visited_cities."""
+
+    data: list[CountryModel]
+
+
 class StatsResponse(DawarichResponse[StatsResponseModel]):
     """Dawarich API response on /api/v1/stats."""
 
@@ -60,6 +94,24 @@ class StatsResponse(DawarichResponse[StatsResponseModel]):
 
 class AddOnePointResponse(DawarichResponse[None]):
     """Dawarich API response on /api/v1/overland/batches."""
+
+    pass
+
+
+class AreasResponse(DawarichResponse[list[AreaResponseModel]]):
+    """Dawarich API response on /api/v1/areas."""
+
+    pass
+
+
+class AreaActionResponse(DawarichResponse[None]):
+    """Dawarich API response on /api/v1/areas."""
+
+    pass
+
+
+class VisitedCitiesResponse(DawarichResponse[VisitedCitiesResponseModel]):
+    """Dawarich API response on /api/v1/countries/visited_cities."""
 
     pass
 
@@ -86,7 +138,7 @@ class DawarichAPI:
         self.timezone = timezone or datetime.datetime.now().astimezone().tzinfo
 
     def _build_url(self, path: str) -> str:
-        """Build API URL with authentication."""
+        """Build API URL."""
         return f"{self.url}{path}"
 
     def _get_headers(self, with_auth: bool = True) -> dict[str, str]:
@@ -211,6 +263,129 @@ class DawarichAPI:
         except aiohttp.ClientError as e:
             logger.error("Failed to get stats: %s", e)
             return StatsResponse(
+                response_code=500,
+                response=None,
+                error=str(e),
+            )
+
+    async def get_areas(self) -> AreasResponse:
+        """Get the areas from the API."""
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.get(
+                    self._build_url(API_V1_AREAS),
+                    headers=self._get_headers(),
+                )
+                response.raise_for_status()
+                data = await response.json()
+                return AreasResponse(
+                    response_code=response.status,
+                    response=[AreaResponseModel.parse_obj(d) for d in data],
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to get areas: %s", e)
+            return AreasResponse(
+                response_code=500,
+                response=None,
+                error=str(e),
+            )
+
+    async def create_an_area(
+        self, name: str, latitude: float, longitude: float, radius: int
+    ) -> AreaActionResponse:
+        """Create an area in the API."""
+
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+
+        data = {
+            "name": name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "radius": radius,
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.post(
+                    self._build_url(API_V1_AREAS),
+                    json=data,
+                    headers=self._get_headers(),
+                )
+                response.raise_for_status()
+                return AreaActionResponse(
+                    response_code=response.status,
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to create an area: %s", e)
+            return AreaActionResponse(
+                response_code=500,
+                response=None,
+                error=str(e),
+            )
+
+    async def delete_an_area(self, area_id: int) -> AreaActionResponse:
+        """Delete an area in the API."""
+
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+        if isinstance(area_id, str):
+            area_id = int(area_id)
+
+        if not isinstance(area_id, int):
+            raise ValueError("Area ID must be an integer.")
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.delete(
+                    self._build_url(f"{API_V1_AREAS}/{area_id}"),
+                    headers=self._get_headers(),
+                )
+                response.raise_for_status()
+                return AreaActionResponse(
+                    response_code=response.status,
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to delete an area: %s", e)
+            return AreaActionResponse(
+                response_code=500,
+                response=None,
+                error=str(e),
+            )
+
+    async def get_visited_cities(
+        self, start_at: datetime.date, end_at: datetime.date
+    ) -> VisitedCitiesResponse:
+        """Get all visited cities in a given time range."""
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                # HACK: The API key has to be passed as a parameter, otherwise 400 code is returned
+                # this is a bug in Dawarich and reported here: https://github.com/Freika/dawarich/issues/679
+                # for now continue to pass the API key as a parameter
+                response = await session.get(
+                    self._build_url(API_V1_VISITED_CITIES),
+                    params={
+                        "start_at": start_at.isoformat(),
+                        "end_at": end_at.isoformat(),
+                        "api_key": self.api_key,
+                    },
+                    # headers=self._get_headers(),
+                )
+                response.raise_for_status()
+                data = await response.json()
+                return VisitedCitiesResponse(
+                    response_code=response.status,
+                    response=VisitedCitiesResponseModel.parse_obj(data),
+                )
+        except aiohttp.ClientError as e:
+            logger.error("Failed to get visited cities: %s", e)
+            return VisitedCitiesResponse(
                 response_code=500,
                 response=None,
                 error=str(e),
