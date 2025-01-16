@@ -1,7 +1,6 @@
 """API class for Dawarich."""
 
 import datetime
-import json
 import logging
 from enum import Enum
 from typing import Generic, TypeVar
