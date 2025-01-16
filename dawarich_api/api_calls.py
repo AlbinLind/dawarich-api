@@ -139,7 +139,7 @@ class DawarichAPI:
         self.timezone = timezone or datetime.datetime.now().astimezone().tzinfo
 
     def _build_url(self, path: str) -> str:
-        """Build API URL with authentication."""
+        """Build API URL."""
         return f"{self.url}{path}"
 
     def _get_headers(self, with_auth: bool = True) -> dict[str, str]:
