@@ -116,6 +116,14 @@ class VisitedCitiesResponse(DawarichResponse[VisitedCitiesResponseModel]):
     pass
 
 
+class DawarichVersion(BaseModel):
+    """Dawarich API response on /api/health."""
+
+    major: int
+    minor: int
+    patch: int
+
+
 class APIVersion(Enum):
     """Supported API versions."""
 
@@ -397,3 +405,28 @@ class DawarichAPI:
                 response=None,
                 error=str(e),
             )
+
+    async def health(self) -> DawarichVersion | None:
+        """In Dawarich version 0.24 and above the health endpoint returns the version of Dawarich. If the version is below 0.24.0,
+        this will return a 0.23 version."""
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.get(
+                    self._build_url("/api/health"),
+                )
+                response.raise_for_status()
+                status = (await response.json()).get("status")
+                version = response.headers.get("X-Dawarich-Version")
+                if version and status == "ok":
+                    version = version.split(".")
+                    return DawarichVersion(
+                        major=version[0], minor=version[1], patch=version[2]
+                    )
+                if status == "ok":
+                    return DawarichVersion(major=0, minor=23, patch=0)
+                return status
+        except aiohttp.ClientError as e:
+            logger.error("Failed to get health: %s", e)
+            return None
