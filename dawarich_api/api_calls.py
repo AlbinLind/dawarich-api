@@ -130,12 +130,14 @@ class DawarichAPI:
         *,
         api_version: APIVersion = APIVersion.V1,
         timezone: datetime.tzinfo | None = None,
+        verify_ssl: bool = True,
     ):
         """Initialize the API."""
         self.url = url.removesuffix("/")
         self.api_version = api_version
         self.api_key = api_key
         self.timezone = timezone or datetime.datetime.now().astimezone().tzinfo
+        self.verify_ssl = verify_ssl
 
     def _build_url(self, path: str) -> str:
         """Build API URL."""
@@ -227,6 +229,7 @@ class DawarichAPI:
                     self._build_url(API_V1_BATCHES_PATH),
                     json=json_data,
                     headers=self._get_headers(),
+                    ssl=self.verify_ssl,
                 )
                 response.raise_for_status()
                 return AddOnePointResponse(
@@ -252,6 +255,7 @@ class DawarichAPI:
                 response = await session.get(
                     self._build_url(API_V1_STATS_PATH),
                     headers=self._get_headers(),
+                    ssl=self.verify_ssl,
                 )
                 response.raise_for_status()
                 data = await response.json()
@@ -278,6 +282,7 @@ class DawarichAPI:
                 response = await session.get(
                     self._build_url(API_V1_AREAS),
                     headers=self._get_headers(),
+                    ssl=self.verify_ssl,
                 )
                 response.raise_for_status()
                 data = await response.json()
@@ -314,6 +319,7 @@ class DawarichAPI:
                     self._build_url(API_V1_AREAS),
                     json=data,
                     headers=self._get_headers(),
+                    ssl=self.verify_ssl,
                 )
                 response.raise_for_status()
                 return AreaActionResponse(
@@ -343,6 +349,7 @@ class DawarichAPI:
                 response = await session.delete(
                     self._build_url(f"{API_V1_AREAS}/{area_id}"),
                     headers=self._get_headers(),
+                    ssl=self.verify_ssl,
                 )
                 response.raise_for_status()
                 return AreaActionResponse(
@@ -376,6 +383,7 @@ class DawarichAPI:
                         "api_key": self.api_key,
                     },
                     # headers=self._get_headers(),
+                    ssl=self.verify_ssl,
                 )
                 response.raise_for_status()
                 data = await response.json()

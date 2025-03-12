@@ -1,6 +1,6 @@
 [project]
 name = "dawarich-api"
-version = "0.3.0"
+version = "0.3.1"
 description = "A python wrapper for the Dawarich API"
 dependencies = ["pydantic>=1.8", "aiohttp>=3.10"]
 requires-python = ">=3.10"
