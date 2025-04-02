@@ -62,3 +62,9 @@ async def test_get_visited_cities(api_client: DawarichAPI):
         start_at=datetime.date(2024, 1, 1), end_at=datetime.date(2025, 2, 1)
     )
     assert response.response_code == 200
+
+@pytest.mark.asyncio
+async def test_health(api_client: DawarichAPI):
+    """Test health method."""
+    response = await api_client.health()
+    assert response is not None
