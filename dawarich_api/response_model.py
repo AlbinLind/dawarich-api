@@ -1,3 +1,5 @@
+"""Dawarich API response models."""
+
 from typing import Generic, TypeVar
 from pydantic import BaseModel, Field
 
