@@ -412,8 +412,11 @@ class DawarichAPI:
                     if len(version) != 3:
                         logger.error("Invalid version format: %s", version)
                         return None
+                    version = [int(v) for v in version]
                     return DawarichVersion(
-                        major=version[0], minor=version[1], patch=version[2]
+                        major=version[0],
+                        minor=version[1],
+                        patch=version[2],
                     )
                 if status == "ok":
                     return DawarichVersion(major=0, minor=23, patch=0)
