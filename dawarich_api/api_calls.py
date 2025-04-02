@@ -2,133 +2,25 @@
 
 import datetime
 import logging
-from enum import Enum
-from typing import Generic, TypeVar
 import aiohttp
-from pydantic import BaseModel, Field
 
-T = TypeVar("T")
+from dawarich_api.constants import APIVersion, DawarichV1Endpoint
+from dawarich_api.response_model import (
+    AddOnePointResponse,
+    AreaResponseModel,
+    DawarichVersion,
+    StatsResponse,
+    AreasResponse,
+    AreaActionResponse,
+    StatsResponseModel,
+    VisitedCitiesResponse,
+    VisitedCitiesResponseModel,
+)
 
-# Constants
-API_V1_STATS_PATH = "/api/v1/stats"
-API_V1_POINTS = "/api/v1/points"
-API_V1_AREAS = "/api/v1/areas"
-API_V1_VISITED_CITIES = "/api/v1/countries/visited_cities"
-API_V1_HEALTH = "/api/v1/health"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class DawarichResponse(BaseModel, Generic[T]):
-    """Dawarich API response."""
-
-    response_code: int
-    response: T | None = None
-    error: str = ""
-
-    @property
-    def success(self) -> bool:
-        """Return True if the response code is 200."""
-        return str(self.response_code).startswith("2")
-
-
-class StatsResponseYearStats(BaseModel):
-    """Dawarich API response on /api/v1/stats/yearly."""
-
-    year: int
-    total_distance_km: float = Field(..., alias="totalDistanceKm")
-    total_countries_visited: int = Field(..., alias="totalCountriesVisited")
-    total_cities_visited: int = Field(..., alias="totalCitiesVisited")
-    monthly_distance_km: dict[str, float] = Field(..., alias="monthlyDistanceKm")
-
-
-class StatsResponseModel(BaseModel):
-    """Dawarich API response on /api/v1/stats."""
-
-    total_distance_km: float = Field(..., alias="totalDistanceKm")
-    total_points_tracked: int = Field(..., alias="totalPointsTracked")
-    total_reverse_geocoded_points: int = Field(..., alias="totalReverseGeocodedPoints")
-    total_countries_visited: int = Field(..., alias="totalCountriesVisited")
-    total_cities_visited: int = Field(..., alias="totalCitiesVisited")
-    yearly_stats: list[StatsResponseYearStats] = Field(..., alias="yearlyStats")
-
-
-class AreaResponseModel(BaseModel):
-    """Dawarich API response on /api/v1/areas."""
-
-    id: int
-    name: str
-    latitude: float
-    longitude: float
-    radius: int
-
-
-class CitiesPerCountryModel(BaseModel):
-    """Dawarich API response on /api/v1/countries/visited_cities."""
-
-    city: str
-    points: int
-    timestamp: int
-    stayed_for: int
-
-
-class CountryModel(BaseModel):
-    """Dawarich API response on /api/v1/countries/visited_cities."""
-
-    country: str
-    cities: list[CitiesPerCountryModel]
-
-
-class VisitedCitiesResponseModel(BaseModel):
-    """Dawarich API response on /api/v1/countries/visited_cities."""
-
-    data: list[CountryModel]
-
-
-class StatsResponse(DawarichResponse[StatsResponseModel]):
-    """Dawarich API response on /api/v1/stats."""
-
-    pass
-
-
-class AddOnePointResponse(DawarichResponse[None]):
-    """Dawarich API response on /api/v1/overland/batches."""
-
-    pass
-
-
-class AreasResponse(DawarichResponse[list[AreaResponseModel]]):
-    """Dawarich API response on /api/v1/areas."""
-
-    pass
-
-
-class AreaActionResponse(DawarichResponse[None]):
-    """Dawarich API response on /api/v1/areas."""
-
-    pass
-
-
-class VisitedCitiesResponse(DawarichResponse[VisitedCitiesResponseModel]):
-    """Dawarich API response on /api/v1/countries/visited_cities."""
-
-    pass
-
-
-class DawarichVersion(BaseModel):
-    """Dawarich API response on /api/health."""
-
-    major: int
-    minor: int
-    patch: int
-
-
-class APIVersion(Enum):
-    """Supported API versions."""
-
-    V1 = "v1"
 
 
 class DawarichAPI:
@@ -227,7 +119,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.post(
-                    self._build_url(API_V1_POINTS),
+                    self._build_url(DawarichV1Endpoint.API_V1_POINTS),
                     json=json_data,
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
@@ -254,7 +146,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
-                    self._build_url(API_V1_STATS_PATH),
+                    self._build_url(DawarichV1Endpoint.API_V1_STATS_PATH),
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
                 )
@@ -280,7 +172,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
-                    self._build_url(API_V1_AREAS),
+                    self._build_url(DawarichV1Endpoint.API_V1_AREAS),
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
                 )
@@ -316,7 +208,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.post(
-                    self._build_url(API_V1_AREAS),
+                    self._build_url(DawarichV1Endpoint.API_V1_AREAS),
                     json=data,
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
@@ -347,7 +239,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.delete(
-                    self._build_url(f"{API_V1_AREAS}/{area_id}"),
+                    self._build_url(f"{DawarichV1Endpoint.API_V1_AREAS}/{area_id}"),
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
                 )
@@ -376,7 +268,7 @@ class DawarichAPI:
                 # this is a bug in Dawarich and reported here: https://github.com/Freika/dawarich/issues/679
                 # for now continue to pass the API key as a parameter
                 response = await session.get(
-                    self._build_url(API_V1_VISITED_CITIES),
+                    self._build_url(DawarichV1Endpoint.API_V1_VISITED_CITIES),
                     params={
                         "start_at": start_at.isoformat(),
                         "end_at": end_at.isoformat(),
@@ -407,7 +299,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
-                    self._build_url(API_V1_HEALTH),
+                    self._build_url(DawarichV1Endpoint.API_V1_HEALTH),
                 )
                 response.raise_for_status()
                 status = (await response.json()).get("status")
@@ -417,8 +309,11 @@ class DawarichAPI:
                     if len(version) != 3:
                         logger.error("Invalid version format: %s", version)
                         return None
+                    version = [int(v) for v in version]
                     return DawarichVersion(
-                        major=version[0], minor=version[1], patch=version[2]
+                        major=version[0],
+                        minor=version[1],
+                        patch=version[2],
                     )
                 if status == "ok":
                     return DawarichVersion(major=0, minor=23, patch=0)
