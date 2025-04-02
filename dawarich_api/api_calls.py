@@ -8,13 +8,8 @@ import aiohttp
 from pydantic import BaseModel, Field
 
 T = TypeVar("T")
+from dawarich_api.constants import APIVersion, DawarichV1Endpoint
 
-# Constants
-API_V1_STATS_PATH = "/api/v1/stats"
-API_V1_POINTS = "/api/v1/points"
-API_V1_AREAS = "/api/v1/areas"
-API_V1_VISITED_CITIES = "/api/v1/countries/visited_cities"
-API_V1_HEALTH = "/api/v1/health"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -227,7 +222,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.post(
-                    self._build_url(API_V1_POINTS),
+                    self._build_url(DawarichV1Endpoint.API_V1_POINTS),
                     json=json_data,
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
@@ -254,7 +249,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
-                    self._build_url(API_V1_STATS_PATH),
+                    self._build_url(DawarichV1Endpoint.API_V1_STATS_PATH),
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
                 )
@@ -280,7 +275,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
-                    self._build_url(API_V1_AREAS),
+                    self._build_url(DawarichV1Endpoint.API_V1_AREAS),
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
                 )
@@ -316,7 +311,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.post(
-                    self._build_url(API_V1_AREAS),
+                    self._build_url(DawarichV1Endpoint.API_V1_AREAS),
                     json=data,
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
@@ -347,7 +342,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.delete(
-                    self._build_url(f"{API_V1_AREAS}/{area_id}"),
+                    self._build_url(f"{DawarichV1Endpoint.API_V1_AREAS}/{area_id}"),
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
                 )
@@ -376,7 +371,7 @@ class DawarichAPI:
                 # this is a bug in Dawarich and reported here: https://github.com/Freika/dawarich/issues/679
                 # for now continue to pass the API key as a parameter
                 response = await session.get(
-                    self._build_url(API_V1_VISITED_CITIES),
+                    self._build_url(DawarichV1Endpoint.API_V1_VISITED_CITIES),
                     params={
                         "start_at": start_at.isoformat(),
                         "end_at": end_at.isoformat(),
@@ -407,7 +402,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
-                    self._build_url(API_V1_HEALTH),
+                    self._build_url(DawarichV1Endpoint.API_V1_HEALTH),
                 )
                 response.raise_for_status()
                 status = (await response.json()).get("status")
