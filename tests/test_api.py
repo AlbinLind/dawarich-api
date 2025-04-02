@@ -63,6 +63,7 @@ async def test_get_visited_cities(api_client: DawarichAPI):
     )
     assert response.response_code == 200
 
+
 @pytest.mark.asyncio
 async def test_health(api_client: DawarichAPI):
     """Test health method."""
