@@ -14,7 +14,7 @@ API_V1_STATS_PATH = "/api/v1/stats"
 API_V1_BATCHES_PATH = "/api/v1/overland/batches"
 API_V1_AREAS = "/api/v1/areas"
 API_V1_VISITED_CITIES = "/api/v1/countries/visited_cities"
-API_V1_HEALTH = "/api/health"
+API_V1_HEALTH = "/api/v1/health"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
