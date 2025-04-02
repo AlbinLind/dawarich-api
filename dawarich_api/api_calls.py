@@ -259,10 +259,9 @@ class DawarichAPI:
                 )
                 response.raise_for_status()
                 data = await response.json()
-                # TODO v2: when Home assistant supports v2, use model_validate instead of parse_obj
                 return StatsResponse(
                     response_code=response.status,
-                    response=StatsResponseModel.parse_obj(data),
+                    response=StatsResponseModel.model_validate(data),
                 )
         except aiohttp.ClientError as e:
             logger.error("Failed to get stats: %s", e)
@@ -288,7 +287,7 @@ class DawarichAPI:
                 data = await response.json()
                 return AreasResponse(
                     response_code=response.status,
-                    response=[AreaResponseModel.parse_obj(d) for d in data],
+                    response=[AreaResponseModel.model_validate(d) for d in data],
                 )
         except aiohttp.ClientError as e:
             logger.error("Failed to get areas: %s", e)
@@ -389,7 +388,7 @@ class DawarichAPI:
                 data = await response.json()
                 return VisitedCitiesResponse(
                     response_code=response.status,
-                    response=VisitedCitiesResponseModel.parse_obj(data),
+                    response=VisitedCitiesResponseModel.model_validate(data),
                 )
         except aiohttp.ClientError as e:
             logger.error("Failed to get visited cities: %s", e)
