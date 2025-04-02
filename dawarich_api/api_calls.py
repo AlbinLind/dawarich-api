@@ -11,7 +11,6 @@ T = TypeVar("T")
 
 # Constants
 API_V1_STATS_PATH = "/api/v1/stats"
-API_V1_BATCHES_PATH = "/api/v1/overland/batches"
 API_V1_POINTS = "/api/v1/points"
 API_V1_AREAS = "/api/v1/areas"
 API_V1_VISITED_CITIES = "/api/v1/countries/visited_cities"
