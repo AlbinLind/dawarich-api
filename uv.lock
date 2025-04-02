@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.10"
 
 [[package]]
@@ -138,7 +139,7 @@ wheels = [
 
 [[package]]
 name = "dawarich-api"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -157,11 +158,12 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.10" },
-    { name = "pydantic", specifier = ">=1.8" },
+    { name = "pydantic", specifier = ">=2.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.4" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.25.0" },
     { name = "ruff", marker = "extra == 'format'", specifier = ">=0.7.1" },
 ]
+provides-extras = ["test", "format"]
 
 [[package]]
 name = "exceptiongroup"

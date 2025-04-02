@@ -14,6 +14,7 @@ API_V1_STATS_PATH = "/api/v1/stats"
 API_V1_BATCHES_PATH = "/api/v1/overland/batches"
 API_V1_AREAS = "/api/v1/areas"
 API_V1_VISITED_CITIES = "/api/v1/countries/visited_cities"
+API_V1_HEALTH = "/api/v1/health"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -114,6 +115,14 @@ class VisitedCitiesResponse(DawarichResponse[VisitedCitiesResponseModel]):
     """Dawarich API response on /api/v1/countries/visited_cities."""
 
     pass
+
+
+class DawarichVersion(BaseModel):
+    """Dawarich API response on /api/health."""
+
+    major: int
+    minor: int
+    patch: int
 
 
 class APIVersion(Enum):
@@ -397,3 +406,31 @@ class DawarichAPI:
                 response=None,
                 error=str(e),
             )
+
+    async def health(self) -> DawarichVersion | None:
+        """In Dawarich version 0.24 and above the health endpoint returns the version of Dawarich.
+        If the version is below 0.24.0, this will return a 0.23 version."""
+        if self.api_version != APIVersion.V1:
+            raise ValueError("Unsupported API version for this method.")
+        try:
+            async with aiohttp.ClientSession() as session:
+                response = await session.get(
+                    self._build_url(API_V1_HEALTH),
+                )
+                response.raise_for_status()
+                status = (await response.json()).get("status")
+                version = response.headers.get("X-Dawarich-Version")
+                if version and status == "ok":
+                    version = version.split(".")
+                    if len(version) != 3:
+                        logger.error("Invalid version format: %s", version)
+                        return None
+                    return DawarichVersion(
+                        major=version[0], minor=version[1], patch=version[2]
+                    )
+                if status == "ok":
+                    return DawarichVersion(major=0, minor=23, patch=0)
+                return status
+        except aiohttp.ClientError as e:
+            logger.error("Failed to get health: %s", e)
+            return None
