@@ -421,6 +421,9 @@ class DawarichAPI:
                 version = response.headers.get("X-Dawarich-Version")
                 if version and status == "ok":
                     version = version.split(".")
+                    if len(version) != 3:
+                        logger.error("Invalid version format: %s", version)
+                        return None
                     return DawarichVersion(
                         major=version[0], minor=version[1], patch=version[2]
                     )
