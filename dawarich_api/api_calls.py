@@ -14,6 +14,7 @@ API_V1_STATS_PATH = "/api/v1/stats"
 API_V1_BATCHES_PATH = "/api/v1/overland/batches"
 API_V1_AREAS = "/api/v1/areas"
 API_V1_VISITED_CITIES = "/api/v1/countries/visited_cities"
+API_V1_HEALTH = "/api/health"
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -414,7 +415,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
-                    self._build_url("/api/health"),
+                    self._build_url(API_V1_HEALTH),
                 )
                 response.raise_for_status()
                 status = (await response.json()).get("status")
