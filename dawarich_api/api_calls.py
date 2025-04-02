@@ -174,15 +174,12 @@ class DawarichAPI:
         speed: int = 0,
         horizontal_accuracy: int = 0,
         vertical_accuracy: int = 0,
-        motion: list[str] = list(),
-        pauses: bool = False,
-        activity: str = "unknown",
-        desired_accuracy: int = 0,
-        deferred: int = 0,
         significant_change: str = "unknown",
         wifi: str = "unknown",
         battery_state: str = "unknown",
         battery_level: int = 0,
+        course: int = 0,
+        course_accuracy: int = 0,
     ) -> AddOnePointResponse:
         """Post data to the API.
 
@@ -200,7 +197,6 @@ class DawarichAPI:
         # Convert time_stamp to the timezone of the API
         time_stamp = time_stamp.astimezone(tz=self.timezone)
 
-        locations_in_payload = 1
         json_data = {
             "locations": [
                 {
@@ -218,17 +214,13 @@ class DawarichAPI:
                         "speed": speed,
                         "horizontal_accuracy": horizontal_accuracy,
                         "vertical_accuracy": vertical_accuracy,
-                        "motion": motion,
-                        "pauses": pauses,
-                        "activity": activity,
-                        "desired_accuracy": desired_accuracy,
-                        "deferred": deferred,
                         "significant_change": significant_change,
-                        "locations_in_payload": locations_in_payload,
                         "device_id": name,
                         "wifi": wifi,
                         "battery_state": battery_state,
                         "battery_level": battery_level,
+                        "course": course,
+                        "course_accuracy": course_accuracy,
                     },
                 }
             ]
