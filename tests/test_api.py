@@ -37,7 +37,7 @@ def add_one_point(api_client: DawarichAPI):
 async def test_add_one_point(add_one_point):
     """Test add_one_point method."""
     response: AddOnePointResponse = await add_one_point
-    assert response.response_code == 201
+    assert response.response_code == 200
 
 
 @pytest.mark.asyncio
