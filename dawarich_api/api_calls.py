@@ -236,7 +236,7 @@ class DawarichAPI:
         try:
             async with aiohttp.ClientSession() as session:
                 response = await session.post(
-                    self._build_url(API_V1_BATCHES_PATH),
+                    self._build_url(API_V1_POINTS),
                     json=json_data,
                     headers=self._get_headers(),
                     ssl=self.verify_ssl,
