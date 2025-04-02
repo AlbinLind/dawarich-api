@@ -408,8 +408,8 @@ class DawarichAPI:
             )
 
     async def health(self) -> DawarichVersion | None:
-        """In Dawarich version 0.24 and above the health endpoint returns the version of Dawarich. If the version is below 0.24.0,
-        this will return a 0.23 version."""
+        """In Dawarich version 0.24 and above the health endpoint returns the version of Dawarich.
+        If the version is below 0.24.0, this will return a 0.23 version."""
         if self.api_version != APIVersion.V1:
             raise ValueError("Unsupported API version for this method.")
         try:
