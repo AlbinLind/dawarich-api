@@ -300,6 +300,7 @@ class DawarichAPI:
             async with aiohttp.ClientSession() as session:
                 response = await session.get(
                     self._build_url(DawarichV1Endpoint.API_V1_HEALTH),
+                    ssl=self.verify_ssl,
                 )
                 response.raise_for_status()
                 status = (await response.json()).get("status")
