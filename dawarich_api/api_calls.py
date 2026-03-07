@@ -60,7 +60,7 @@ class DawarichAPI:
         latitude: float,
         name: str,
         *,
-        time_stamp: datetime.datetime | None = None,
+        timestamp: datetime.datetime | float | int | None = None,
         altitude: int = 0,
         speed: int = 0,
         horizontal_accuracy: int = 0,
@@ -71,6 +71,7 @@ class DawarichAPI:
         battery_level: int = 0,
         course: int = 0,
         course_accuracy: int = 0,
+        **kwargs,
     ) -> AddOnePointResponse:
         """Post data to the API.
 
@@ -78,15 +79,22 @@ class DawarichAPI:
         """
         if self.api_version != APIVersion.V1:
             raise ValueError("Unsupported API version for this method.")
+        if "time_stamp" in kwargs:
+            logger.warning(
+                "The 'time_stamp' parameter is deprecated, please use 'timestamp' instead."
+            )
+            timestamp = kwargs["time_stamp"]
 
         # Convert time_stamp to datetime object
-        if isinstance(time_stamp, str):
-            time_stamp = datetime.datetime.fromisoformat(time_stamp)
-        if time_stamp is None:
-            time_stamp = datetime.datetime.now()
+        if isinstance(timestamp, str):
+            timestamp = datetime.datetime.fromisoformat(timestamp)
+        elif isinstance(timestamp, (float, int)):
+            timestamp = datetime.datetime.fromtimestamp(timestamp)
+        elif timestamp is None:
+            timestamp = datetime.datetime.now()
 
         # Convert time_stamp to the timezone of the API
-        time_stamp = time_stamp.astimezone(tz=self.timezone)
+        timestamp = timestamp.astimezone(tz=self.timezone)
 
         json_data = {
             "locations": [
@@ -100,7 +108,7 @@ class DawarichAPI:
                         ],
                     },
                     "properties": {
-                        "timestamp": time_stamp.isoformat(),
+                        "timestamp": timestamp.isoformat(),
                         "altitude": altitude,
                         "speed": speed,
                         "horizontal_accuracy": horizontal_accuracy,
